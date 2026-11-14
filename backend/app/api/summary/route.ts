@@ -3,7 +3,7 @@ import { decrypt } from '../../../lib/crypto.ts';
 import { db } from '../../../lib/db.ts';
 
 // Home screen data: account balances + who owes you.
-export const GET = route(async () => {
+export const GET = route(async (_req, _ctx, user) => {
   const sql = db();
   const [accounts, people, categories] = await Promise.all([
     sql`
@@ -16,6 +16,7 @@ export const GET = route(async () => {
           end), 0))::float8 / 100 as balance
       from accounts a
       left join entries e on a.id in (e.account_id, e.to_account_id)
+      where a.user_id = ${user}
       group by a.id order by a.id`,
     // Left join: people added by hand show up before they have any entries.
     sql`
@@ -25,8 +26,9 @@ export const GET = route(async () => {
         coalesce(sum(case e.type when 'expense' then e.amount else 0 end), 0)::float8 / 100 as sent,
         count(e.id)::int as entries
       from people p left join entries e on e.person_id = p.id
+      where p.user_id = ${user}
       group by p.id`,
-    sql`select id, name from categories order by name`,
+    sql`select id, name from categories where user_id = ${user} order by name`,
   ]);
   return Response.json({
     accounts,

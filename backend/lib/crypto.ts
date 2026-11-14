@@ -44,20 +44,21 @@ export function verifyPassword(password: string, stored: string): boolean {
   return timingSafeEqual(actual, expected);
 }
 
-// --- Session token: "expiry.hmac". Rotate SESSION_SECRET to log out every device. ---
+// --- Session token: "userId.expiry.hmac". Rotate SESSION_SECRET to log out every device. ---
 
 const TOKEN_DAYS = 30;
 
-const sign = (exp: string) => createHmac('sha256', secret('SESSION_SECRET')).update(exp).digest('base64url');
+const sign = (body: string) => createHmac('sha256', secret('SESSION_SECRET')).update(body).digest('base64url');
 
-export function createToken(now = Date.now()): string {
-  const exp = String(now + TOKEN_DAYS * 86_400_000);
-  return `${exp}.${sign(exp)}`;
+export function createToken(userId: number, now = Date.now()): string {
+  const body = `${userId}.${now + TOKEN_DAYS * 86_400_000}`;
+  return `${body}.${sign(body)}`;
 }
 
-export function verifyToken(token: string, now = Date.now()): boolean {
-  const [exp, sig] = token.split('.');
-  if (!exp || !sig || !(Number(exp) > now)) return false;
-  const a = Buffer.from(sig), b = Buffer.from(sign(exp));
-  return a.length === b.length && timingSafeEqual(a, b);
+// Returns the user id, or 0 when the token is missing, forged or expired.
+export function verifyToken(token: string, now = Date.now()): number {
+  const [uid, exp, sig] = token.split('.');
+  if (!uid || !exp || !sig || !(Number(exp) > now)) return 0;
+  const a = Buffer.from(sig), b = Buffer.from(sign(`${uid}.${exp}`));
+  return a.length === b.length && timingSafeEqual(a, b) ? Number(uid) : 0;
 }

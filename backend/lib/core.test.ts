@@ -22,11 +22,12 @@ test('password + token', () => {
   const h = hashPassword('correct horse battery');
   assert.ok(verifyPassword('correct horse battery', h));
   assert.ok(!verifyPassword('wrong', h));
-  const t = createToken(0);
-  assert.ok(verifyToken(t, 1000));
-  assert.ok(!verifyToken(t, 31 * 86_400_000)); // expired
-  assert.ok(!verifyToken(t.replace(/.$/, (c) => (c === 'A' ? 'B' : 'A')), 1000)); // forged
-  assert.ok(!verifyToken('', 0));
+  const t = createToken(7, 0);
+  assert.equal(verifyToken(t, 1000), 7);
+  assert.equal(verifyToken(t, 31 * 86_400_000), 0); // expired
+  assert.equal(verifyToken(t.replace(/.$/, (c) => (c === 'A' ? 'B' : 'A')), 1000), 0); // forged
+  assert.equal(verifyToken(t.replace(/^7/, '8'), 1000), 0); // can't switch user
+  assert.equal(verifyToken('', 0), 0);
 });
 
 test('money parsing', () => {

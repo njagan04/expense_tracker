@@ -49,11 +49,11 @@ export function parseEntry(b: any): EntryInput {
 }
 
 // Entry ready for SQL: person name -> id, note encrypted by caller.
-export async function resolvePerson(e: EntryInput) {
-  return { ...e, person_id: await personId(e.person) };
+export async function resolvePerson(user: number, e: EntryInput) {
+  return { ...e, person_id: await personId(user, e.person) };
 }
 
-export async function listEntries(f: { from?: string; to?: string; account_id?: number; category_id?: number; person_id?: number }) {
+export async function listEntries(user: number, f: { from?: string; to?: string; account_id?: number; category_id?: number; person_id?: number }) {
   const rows = await db()`
     select e.id, to_char(e.date, 'YYYY-MM-DD') as date, e.type, e.amount::float8 / 100 as amount,
            e.account_id, a.name as account, e.to_account_id, ta.name as to_account,
@@ -63,7 +63,8 @@ export async function listEntries(f: { from?: string; to?: string; account_id?: 
     left join accounts ta on ta.id = e.to_account_id
     left join categories c on c.id = e.category_id
     left join people p on p.id = e.person_id
-    where (${f.from ?? null}::date is null or e.date >= ${f.from ?? null}::date)
+    where e.user_id = ${user}
+      and (${f.from ?? null}::date is null or e.date >= ${f.from ?? null}::date)
       and (${f.to ?? null}::date is null or e.date < ${f.to ?? null}::date)
       and (${f.account_id ?? null}::int is null or ${f.account_id ?? null}::int in (e.account_id, e.to_account_id))
       and (${f.category_id ?? null}::int is null or e.category_id = ${f.category_id ?? null}::int)

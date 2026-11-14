@@ -12,15 +12,17 @@ export const bad = (message: string): never => {
   throw new HttpError(400, message);
 };
 
-type Handler<C> = (req: Request, ctx: C) => Promise<Response>;
+// `user` is the logged-in user's id (0 on public routes).
+type Handler<C> = (req: Request, ctx: C, user: number) => Promise<Response>;
 
 // Wraps every route: checks the Bearer token (unless public) and turns errors into JSON.
-export function route<C>(fn: Handler<C>, { isPublic = false } = {}): Handler<C> {
+export function route<C>(fn: Handler<C>, { isPublic = false } = {}): (req: Request, ctx: C) => Promise<Response> {
   return async (req, ctx) => {
-    const token = req.headers.get('authorization')?.replace(/^Bearer /, '') ?? '';
-    if (!isPublic && !verifyToken(token)) return Response.json({ error: 'unauthorized' }, { status: 401 });
     try {
-      return await fn(req, ctx);
+      const token = req.headers.get('authorization')?.replace(/^Bearer /, '') ?? '';
+      const user = verifyToken(token);
+      if (!isPublic && !user) return Response.json({ error: 'unauthorized' }, { status: 401 });
+      return await fn(req, ctx, user);
     } catch (e: any) {
       if (e instanceof HttpError) return Response.json({ error: e.message }, { status: e.status });
       // Postgres FK / check / unique violations = bad input, not a crash.
