@@ -25,7 +25,6 @@ export default function Settings() {
   const accounts = data?.accounts ?? [];
   const [cranes, setCranes] = usePref('cranes');
   const [lock, setLock] = usePref('lock');
-  const [fingerprint, setFingerprint] = usePref('fingerprint');
 
   const confirmLogout = () =>
     Alert.alert('Log out?', 'You will need your password to log in again.', [
@@ -72,12 +71,8 @@ export default function Settings() {
         <Row icon="sparkles" color={colors.violet} label="Crane animation" sub="Birds flying behind the Home screen" valueNode={toggle(cranes, setCranes)} last />
       </Group>
 
-      <Group
-        title="Security"
-        footer={!lock ? 'Anyone holding your unlocked phone can open the app.' : fingerprint ? undefined : 'You unlock the app with your password.'}
-      >
-        <Row icon="lock-open" color={colors.accent} label="App lock" sub={lock ? 'Ask to unlock every time the app opens' : 'Opens straight to Home'} valueNode={toggle(lock, setLock)} />
-        {lock && <Row icon="finger-print" color={colors.green} label="Fingerprint unlock" sub={fingerprint ? 'Unlock with fingerprint or phone PIN' : 'Password only'} valueNode={toggle(fingerprint, setFingerprint)} />}
+      <Group title="Security" footer={lock ? undefined : 'Anyone holding your unlocked phone can open the app.'}>
+        <Row icon="finger-print" color={colors.green} label="App lock" sub={lock ? 'Fingerprint or password when the app opens' : 'Opens straight to Home'} valueNode={toggle(lock, setLock)} />
         <Row icon="lock-closed" color={colors.blue} label="Encryption" value="AES-256" last />
       </Group>
 

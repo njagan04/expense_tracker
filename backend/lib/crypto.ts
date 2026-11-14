@@ -46,7 +46,7 @@ export function verifyPassword(password: string, stored: string): boolean {
 
 // --- Session token: "userId.expiry.hmac". Rotate SESSION_SECRET to log out every device. ---
 
-const TOKEN_DAYS = 30;
+const TOKEN_DAYS = 365; // stay logged in for a year; Log out ends it sooner
 
 const sign = (body: string) => createHmac('sha256', secret('SESSION_SECRET')).update(body).digest('base64url');
 

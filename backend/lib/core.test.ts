@@ -24,7 +24,7 @@ test('password + token', () => {
   assert.ok(!verifyPassword('wrong', h));
   const t = createToken(7, 0);
   assert.equal(verifyToken(t, 1000), 7);
-  assert.equal(verifyToken(t, 31 * 86_400_000), 0); // expired
+  assert.equal(verifyToken(t, 366 * 86_400_000), 0); // expired
   assert.equal(verifyToken(t.replace(/.$/, (c) => (c === 'A' ? 'B' : 'A')), 1000), 0); // forged
   assert.equal(verifyToken(t.replace(/^7/, '8'), 1000), 0); // can't switch user
   assert.equal(verifyToken('', 0), 0);

@@ -7,7 +7,6 @@ import { lastUsername, login, userName } from '../lib/api';
 import { colors, heroGradient } from '../lib/util';
 import { Button } from './ui';
 import { CranePond, type PondHandle } from './CranePond';
-import { getPref } from '../lib/prefs';
 
 // One screen for both cases:
 //  - "login":  no saved session yet -> username + password, or create an account with the invite code.
@@ -40,8 +39,8 @@ export default function AuthScreen({ mode, onDone }: { mode: 'login' | 'unlock';
     if (mode !== 'unlock') return;
     let sub: { remove: () => void } | undefined;
     (async () => {
-      // Fingerprint can be switched off in Settings; then only the password unlocks the app.
-      const ready = (await getPref('fingerprint')) && (await LocalAuthentication.hasHardwareAsync()) && (await LocalAuthentication.isEnrolledAsync());
+      // Phones without a fingerprint set up unlock with the password.
+      const ready = (await LocalAuthentication.hasHardwareAsync()) && (await LocalAuthentication.isEnrolledAsync());
       setBiometricReady(ready);
       if (!ready) return setUsePassword(true);
       // Auto-prompt only once the app is fully in the foreground; Android drops prompts shown earlier.
