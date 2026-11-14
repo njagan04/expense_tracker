@@ -24,6 +24,16 @@
       "expo-font"
     ],
     "scheme": "expensetracker",
-    "backgroundColor": "#07070B"
+    "backgroundColor": "#07070B",
+    "extra": {
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "68336d7a-d189-4773-a6a6-b5bc51ea7e64"
+      }
+    }
   }
 }
