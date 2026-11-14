@@ -24,6 +24,7 @@ export default function Settings() {
   const { data } = useFocusData(() => api<Summary>('/summary'));
   const accounts = data?.accounts ?? [];
   const [cranes, setCranes] = usePref('cranes');
+  const [lock, setLock] = usePref('lock');
   const [fingerprint, setFingerprint] = usePref('fingerprint');
 
   const confirmLogout = () =>
@@ -71,8 +72,12 @@ export default function Settings() {
         <Row icon="sparkles" color={colors.violet} label="Crane animation" sub="Birds flying behind the Home screen" valueNode={toggle(cranes, setCranes)} last />
       </Group>
 
-      <Group title="Security" footer={fingerprint ? undefined : 'The app still locks; you unlock it with your password.'}>
-        <Row icon="finger-print" color={colors.green} label="Fingerprint unlock" sub={fingerprint ? 'Unlock with fingerprint or phone PIN' : 'Password only'} valueNode={toggle(fingerprint, setFingerprint)} />
+      <Group
+        title="Security"
+        footer={!lock ? 'Anyone holding your unlocked phone can open the app.' : fingerprint ? undefined : 'You unlock the app with your password.'}
+      >
+        <Row icon="lock-open" color={colors.accent} label="App lock" sub={lock ? 'Ask to unlock every time the app opens' : 'Opens straight to Home'} valueNode={toggle(lock, setLock)} />
+        {lock && <Row icon="finger-print" color={colors.green} label="Fingerprint unlock" sub={fingerprint ? 'Unlock with fingerprint or phone PIN' : 'Password only'} valueNode={toggle(fingerprint, setFingerprint)} />}
         <Row icon="lock-closed" color={colors.blue} label="Encryption" value="AES-256" last />
       </Group>
 

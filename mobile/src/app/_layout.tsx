@@ -6,6 +6,7 @@ import * as SystemUI from 'expo-system-ui';
 import { loadToken, setLogoutListener } from '../lib/api';
 import { colors } from '../lib/util';
 import AuthScreen from '../components/AuthScreen';
+import { getPref } from '../lib/prefs';
 
 // The window behind every screen: dark, so nothing white shows through when the keyboard resizes the screen.
 SystemUI.setBackgroundColorAsync(colors.bg).catch(() => {});
@@ -18,9 +19,15 @@ export default function RootLayout() {
 
   useEffect(() => {
     setLogoutListener(() => setState('loggedOut'));
-    loadToken().then((t) => setState(t ? 'loggedIn' : 'loggedOut'));
-    // Re-lock whenever the app goes to the background.
-    const sub = AppState.addEventListener('change', (s) => s === 'background' && setLocked(true));
+    // App lock can be switched off in Settings; then the app opens straight to Home.
+    Promise.all([loadToken(), getPref('lock')]).then(([t, lock]) => {
+      setLocked(lock);
+      setState(t ? 'loggedIn' : 'loggedOut');
+    });
+    // Re-lock whenever the app goes to the background (if the lock is on).
+    const sub = AppState.addEventListener('change', (s) => {
+      if (s === 'background') getPref('lock').then((on) => on && setLocked(true));
+    });
     return () => sub.remove();
   }, []);
 

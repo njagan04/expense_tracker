@@ -1,8 +1,9 @@
 import * as SecureStore from 'expo-secure-store';
 
-// On/off settings saved on this phone. Both default to on.
+// On/off settings saved on this phone. All default to on.
 export const PREFS = {
   cranes: 'pref_cranes_home', // crane animation behind Home
+  lock: 'pref_app_lock', // lock the app when it is opened (off = straight to Home)
   fingerprint: 'pref_fingerprint', // unlock with fingerprint (off = password only)
 } as const;
 
