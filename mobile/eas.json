@@ -1,0 +1,8 @@
+{
+  "build": {
+    "apk": {
+      "android": { "buildType": "apk" },
+      "env": { "EXPO_PUBLIC_API_URL": "https://expense-tracker-nine-eta-11.vercel.app/api" }
+    }
+  }
+}
