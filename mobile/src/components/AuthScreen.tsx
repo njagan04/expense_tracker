@@ -3,19 +3,22 @@ import { ActivityIndicator, AppState, KeyboardAvoidingView, Pressable, StyleShee
 import { LinearGradient } from 'expo-linear-gradient';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as LocalAuthentication from 'expo-local-authentication';
-import { login } from '../lib/api';
-import { colors, heroGradient, OWNER_NAME } from '../lib/util';
+import { lastUsername, login, userName } from '../lib/api';
+import { colors, heroGradient } from '../lib/util';
 import { Button } from './ui';
 import { CranePond, type PondHandle } from './CranePond';
 import { getPref } from '../lib/prefs';
 
 // One screen for both cases:
-//  - "login":  no saved session yet -> password only.
+//  - "login":  no saved session yet -> username + password, or create an account with the invite code.
 //  - "unlock": session saved -> fingerprint (auto-prompted) or password.
 export default function AuthScreen({ mode, onDone }: { mode: 'login' | 'unlock'; onDone: () => void }) {
   const [usePassword, setUsePassword] = useState(mode === 'login');
   const [biometricReady, setBiometricReady] = useState(false);
   const [password, setPassword] = useState('');
+  const [signup, setSignup] = useState(false);
+  const [form, setForm] = useState({ username: '', name: '', code: '' });
+  const set = (k: keyof typeof form) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
   const [show, setShow] = useState(false);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -48,12 +51,15 @@ export default function AuthScreen({ mode, onDone }: { mode: 'login' | 'unlock';
     return () => sub?.remove();
   }, []);
 
+  const filled = !!password && (mode === 'unlock' || (!!form.username && (!signup || (!!form.name && !!form.code))));
   const submit = async () => {
-    if (!password || busy) return;
+    if (!filled || busy) return;
     setBusy(true);
     setError('');
     try {
-      await login(password);
+      // Unlocking with the password re-logs in as the same user.
+      if (signup) await login('/signup', { ...form, password });
+      else await login('/login', { username: mode === 'unlock' ? lastUsername() : form.username, password });
       onDone();
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -71,9 +77,9 @@ export default function AuthScreen({ mode, onDone }: { mode: 'login' | 'unlock';
       <LinearGradient colors={heroGradient} style={styles.appIcon}>
         <Ionicons name="wallet" size={34} color={colors.onAccent} />
       </LinearGradient>
-      <Text style={styles.title}>{mode === 'login' ? 'Expense Tracker' : `Welcome back, ${OWNER_NAME}`}</Text>
+      <Text style={styles.title}>{mode === 'login' ? (signup ? 'Create account' : 'Expense Tracker') : `Welcome back, ${userName()}`}</Text>
       <Text style={styles.subtitle}>
-        {usePassword ? 'Enter your password to continue' : 'Unlock with your fingerprint or phone PIN'}
+        {signup ? 'Ask the app owner for the invite code' : usePassword ? 'Enter your password to continue' : 'Unlock with your fingerprint or phone PIN'}
       </Text>
 
       <View>
@@ -87,16 +93,18 @@ export default function AuthScreen({ mode, onDone }: { mode: 'login' | 'unlock';
         </View>
       ) : (
         <View style={{ gap: 14 }}>
+          {signup && <Field icon="happy-outline" placeholder="Your name" value={form.name} onChangeText={set('name')} autoCapitalize="words" />}
+          {mode === 'login' && <Field icon="person-outline" placeholder="Username" value={form.username} onChangeText={set('username')} autoFocus />}
           <View style={styles.field}>
             <Ionicons name="lock-closed" size={18} color={colors.muted} />
             <TextInput
               style={styles.input}
-              placeholder="Password"
+              placeholder={signup ? 'Password (min 8 characters)' : 'Password'}
               placeholderTextColor={colors.muted}
               secureTextEntry={!show}
               autoCapitalize="none"
               autoCorrect={false}
-              autoFocus
+              autoFocus={mode === 'unlock'}
               value={password}
               onChangeText={setPassword}
               onSubmitEditing={submit}
@@ -106,8 +114,9 @@ export default function AuthScreen({ mode, onDone }: { mode: 'login' | 'unlock';
               <Ionicons name={show ? 'eye-off' : 'eye'} size={20} color={colors.muted} />
             </Pressable>
           </View>
+          {signup && <Field icon="key-outline" placeholder="Invite code" value={form.code} onChangeText={set('code')} />}
           {!!error && <Text style={styles.error}>{error}</Text>}
-          {busy ? <ActivityIndicator color={colors.accent} style={{ padding: 15 }} /> : <Button label="Continue" onPress={submit} disabled={!password} />}
+          {busy ? <ActivityIndicator color={colors.accent} style={{ padding: 15 }} /> : <Button label={signup ? 'Create account' : 'Continue'} onPress={submit} disabled={!filled} />}
           {mode === 'unlock' && biometricReady && (
             <>
                             <Pressable onPress={() => { setError(''); setUsePassword(false); fingerprint(); }} style={({ pressed }) => [styles.switchRow, pressed && { opacity: 0.6 }]} hitSlop={12}>
@@ -115,11 +124,24 @@ export default function AuthScreen({ mode, onDone }: { mode: 'login' | 'unlock';
               </Pressable>
             </>
           )}
-          {mode === 'login' && <Text style={styles.hint}>After this, you can unlock with your fingerprint.</Text>}
+          {mode === 'login' && (
+            <Pressable onPress={() => { setError(''); setSignup((v) => !v); }} style={({ pressed }) => [styles.switchRow, pressed && { opacity: 0.6 }]} hitSlop={12}>
+              <Text style={styles.link}>{signup ? 'I already have an account' : 'Create an account'}</Text>
+            </Pressable>
+          )}
         </View>
       )}
       </View>
       </KeyboardAvoidingView>
+    </View>
+  );
+}
+
+function Field({ icon, ...props }: { icon: React.ComponentProps<typeof Ionicons>['name'] } & React.ComponentProps<typeof TextInput>) {
+  return (
+    <View style={styles.field}>
+      <Ionicons name={icon} size={18} color={colors.muted} />
+      <TextInput style={styles.input} placeholderTextColor={colors.muted} autoCapitalize="none" autoCorrect={false} {...props} />
     </View>
   );
 }

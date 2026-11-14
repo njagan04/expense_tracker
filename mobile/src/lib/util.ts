@@ -108,7 +108,6 @@ export const showError = (e: unknown) => Alert.alert('Something went wrong', e i
 
 
 // Single-user app: shown in the Home greeting and Settings.
-export const OWNER_NAME = 'Jagan';
 
 export const greeting = () => {
   const h = new Date().getHours();

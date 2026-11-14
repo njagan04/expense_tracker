@@ -23,26 +23,43 @@ export type Entry = {
   note: string | null;
 };
 
+const NAME_KEY = 'user_name';
+const USERNAME_KEY = 'user_login';
+
 let token: string | null = null;
+let name = '';
+let username = '';
 let onLogout = () => {};
 
 export const setLogoutListener = (fn: () => void) => (onLogout = fn);
 
+// Display name of the logged-in user (shown in the greeting and settings).
+export const userName = () => name;
+// Username of the last login, so unlocking with the password needs only the password.
+export const lastUsername = () => username;
+
 export async function loadToken() {
   token = await SecureStore.getItemAsync(TOKEN_KEY);
+  name = (await SecureStore.getItemAsync(NAME_KEY)) ?? '';
+  username = (await SecureStore.getItemAsync(USERNAME_KEY)) ?? '';
   return token;
 }
 
-export async function login(password: string) {
-  const r = await fetch(`${BASE}/login`, {
+// path: '/login' { username, password }  or  '/signup' { name, username, password, code }
+export async function login(path: '/login' | '/signup', body: Record<string, string>) {
+  const r = await fetch(`${BASE}${path}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ password }),
+    body: JSON.stringify(body),
   });
   const d = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(d.error ?? `Login failed (${r.status})`);
   token = d.token as string;
+  name = d.name as string;
+  username = body.username.trim().toLowerCase();
   await SecureStore.setItemAsync(TOKEN_KEY, token);
+  await SecureStore.setItemAsync(NAME_KEY, name);
+  await SecureStore.setItemAsync(USERNAME_KEY, username);
 }
 
 export async function logout() {

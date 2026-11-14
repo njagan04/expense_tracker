@@ -4,8 +4,8 @@ import { router } from 'expo-router';
 import Constants from 'expo-constants';
 import { LinearGradient } from 'expo-linear-gradient';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { api, logout, type Summary } from '../lib/api';
-import { accountColor, colors, heroGradient, inr, OWNER_NAME } from '../lib/util';
+import { api, logout, userName, type Summary } from '../lib/api';
+import { accountColor, colors, heroGradient, inr } from '../lib/util';
 import { CardAction, Group, ModalScreen, Row, s, useFocusData } from '../components/ui';
 import { getPref, setPref, type Pref } from '../lib/prefs';
 
@@ -39,7 +39,7 @@ export default function Settings() {
           <Ionicons name="wallet" size={28} color={colors.onAccent} />
         </LinearGradient>
         <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 19, fontWeight: '800', color: colors.text }}>{OWNER_NAME}</Text>
+          <Text style={{ fontSize: 19, fontWeight: '800', color: colors.text }}>{userName()}</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 4 }}>
             <Ionicons name="shield-checkmark" size={14} color={colors.accent} />
             <Text style={{ color: colors.muted, fontSize: 13 }}>Expense Tracker · Encrypted</Text>

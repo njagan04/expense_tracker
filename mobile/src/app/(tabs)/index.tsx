@@ -4,8 +4,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle } from 'react-native-svg';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useFocusEffect } from 'expo-router';
-import { api, type Entry, type EntryType, type Summary } from '../../lib/api';
-import { accountColor, colors, greeting, heroGradient, monthKey, monthLabel, OWNER_NAME, TYPE_STYLE, type IconName } from '../../lib/util';
+import { api, userName, type Entry, type EntryType, type Summary } from '../../lib/api';
+import { accountColor, colors, greeting, heroGradient, monthKey, monthLabel, TYPE_STYLE, type IconName } from '../../lib/util';
 import { Avatar } from '../../components/PersonPicker';
 import { CranePond, type PondHandle } from '../../components/CranePond';
 import { getPref } from '../../lib/prefs';
@@ -55,7 +55,7 @@ export default function Home() {
 
   return (
     <Screen
-      title={OWNER_NAME}
+      title={userName()}
       eyebrow={greeting()}
       refreshing={refreshing}
       onRefresh={reload}
@@ -63,7 +63,7 @@ export default function Home() {
       onTouch={(x, y) => pond.current?.scatter(x, y)}
       left={
         <LinearGradient colors={heroGradient} style={{ width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center' }}>
-          <Text style={{ color: '#fff', fontSize: 19, fontWeight: '800' }}>{OWNER_NAME[0]}</Text>
+          <Text style={{ color: '#fff', fontSize: 19, fontWeight: '800' }}>{userName()[0]?.toUpperCase()}</Text>
         </LinearGradient>
       }
       right={<IconButton icon="settings-outline" onPress={() => router.push('/settings')} />}
